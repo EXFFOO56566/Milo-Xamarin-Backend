@@ -1,0 +1,42 @@
+ $(function() {
+	"use strict";
+        var today = new Date();
+       // var todaydate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+	var fdate = today.toLocaleString("en-US", {timeZone: "America/New_York", year: 'numeric', month:'numeric', day:'numeric'});
+        var mdy = fdate.split('/');
+        var todaydate = parseInt(mdy[2])+'-'+parseInt(mdy[0])+'-'+parseInt(mdy[1] -1);         
+ 	var created_by = 1;
+        $.ajax({
+            type: 'post',
+            url: 'get-event-list',
+            data: "created_by ="+ created_by,
+            success: function(eventList){
+            var eventsList = JSON.parse(eventList);
+ 	    $('#calendar1').fullCalendar({
+ 		header: {
+ 			left: 'prev,next today',
+ 			center: 'title',
+ 			right: 'month,agendaWeek,agendaDay'
+ 		},
+ 		defaultDate: todaydate,
+ 		navLinks: true, // can click day/week names to navigate views
+ 		selectable: true,
+ 		selectHelper: true,
+ 		select: function(start, end) {
+                    var d = new Date(start);
+                    var month = today.getMonth() + 1;
+                    if(today.getDate() <= d.getDate() && today.getMonth() == d.getMonth()){
+                        $("#myMeeting"). modal('show');
+                        $("#meeting_start_date").val(d.getFullYear()+'-'+month+'-'+d.getDate())
+                        $("#meeting_end_date").val(d.getFullYear()+'-'+month+'-'+d.getDate())
+                    }
+ 		},
+ 		editable: true,
+ 		eventLimit: true, // allow "more" link when too many events
+		timeZone: 'America/New_York',
+ 		events:eventsList ,
+                timezone: 'America/New_York',
+ 	
+     }
+        });
+});

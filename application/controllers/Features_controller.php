@@ -1,0 +1,153 @@
+<?php
+class Features_controller extends CI_Controller{
+    
+    public function __construct() {
+        parent::__construct();
+        $this -> load -> model('features_model');
+    }
+    
+    public function our_features(){
+        $result = $this -> db -> select(['F.title as features_title', 'F.details as features_details', 'M.details as master_details', 'M.name as master_name'])
+                    -> from('features as F')
+                    -> join('features_master as M', 'M.id = F.master_id', 'inner')
+                    -> get()
+                    -> result();
+        $data['result'] = $result;
+        $data['title'] = 'Our Services';
+        $this->load->MyTemplate('service', $data);
+    }
+    
+    public function features(){
+       if ($this->authchecking() != 0) {
+            $data['title'] = 'Our Features';
+            $data['master_features'] = $this -> features_model -> view('features_master');
+            $data['featuresList'] = $this -> features_model -> view('features');
+            $this->load->adminTemplate('features/features-list', $data);
+        } else {
+            redirect('logout');
+        }  
+    }
+    
+    public function addfeaturessuccess(){
+      if ($this->authchecking() != 0) {
+            if($this -> input -> post('update_id') != ''){
+            
+            if($this -> features_model -> update('features', ['master_id' => $this -> input -> post('master_id'), 'title' => $this -> input -> post('title'), 'details' => $this -> input -> post('details')], ['id' => $this -> input -> post('update_id')])){
+                $this -> session -> set_flashdata('successmsg', 'Data has been updated successfully.');
+                redirect('author/features');
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Data update error.');
+                redirect('author/features');
+            }
+            
+            }else{
+            
+            if($this -> features_model -> add('features', ['title' => $this -> input -> post('title'), 'master_id' => $this -> input -> post('master_id'), 'details' => $this -> input -> post('details'), 'created_at' => date('Y-m-d', time())])){
+                $this -> session -> set_flashdata('successmsg', 'Data has been added successfully.');
+                redirect('author/features');
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Data insert error.');
+                redirect('author/features');
+            }
+             
+            }
+        } else {
+            redirect('logout');
+        }  
+    }
+    
+    public function updatefeatures(){
+      if ($this->authchecking() != 0) {
+       $updateId = $this -> input -> post('update_id');
+       $result = $this -> features_model -> view('features', ['id' => $updateId]);       
+       echo json_encode($result[0]);
+      }else{
+          redirect('logout');
+      }
+    }
+    
+    public function deletefeatures($del_id){
+         if ($this->authchecking() != 0) {
+         $this -> features_model -> delete('features', ['id' => $del_id]); 
+         $this -> session -> set_flashdata('successmsg', 'Data has been deleted successfully.');
+         redirect('author/features'); 
+      }else{
+        redirect('logout');   
+      } 
+    }
+    
+    public function index(){
+         if ($this->authchecking() != 0) {
+            $data['title'] = 'Features master';
+            $data['masterlist'] = $this -> features_model -> view('features_master');
+            $this->load->adminTemplate('features/master-list', $data);
+        } else {
+            redirect('logout');
+        }
+    }
+        
+    public function addmastersuccess(){
+        if ($this->authchecking() != 0) {
+            if($this -> input -> post('update_id') != ''){
+            if($this -> db -> where(['name', $this -> input -> post('name'), 'id !=' => $this -> input -> post('update_id')]) -> count_all_results('features_master') == 0){
+            
+            if($this -> features_model -> update('features_master', ['name' => $this -> input -> post('name'), 'details' => $this -> input -> post('details'), 'slug_name' => str_replace(' ', '-', strtolower($this -> input -> post('name')))], ['id' => $this -> input -> post('update_id')])){
+                $this -> session -> set_flashdata('successmsg', 'Data has been updated successfully.');
+                redirect('author/master-features');
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Data update error.');
+                redirect('author/master-features');
+            }
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Duplicate features name entered.');
+                redirect('author/master-features'); 
+            }
+            }else{
+               if($this -> db -> where('name', $this -> input -> post('name')) -> count_all_results('features_master') == 0){
+            
+            if($this -> features_model -> add('features_master', ['name' => $this -> input -> post('name'), 'details' => $this -> input -> post('details'), 'created_at' => date('Y-m-d', time()), 'slug_name' => str_replace(' ', '-', strtolower($this -> input -> post('name')))])){
+                $this -> session -> set_flashdata('successmsg', 'Data has been added successfully.');
+                redirect('author/master-features');
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Data insert error.');
+                redirect('author/master-features');
+            }
+            }else{
+                $this -> session -> set_flashdata('errmsg', 'Duplicate features name entered.');
+                redirect('author/master-features'); 
+            }  
+            }
+        } else {
+            redirect('logout');
+        }
+    }
+    
+     public function updatemaster(){
+      if ($this->authchecking() != 0) {
+       $updateId = $this -> input -> post('update_id');
+       $result = $this -> features_model -> view('features_master', ['id' => $updateId]);       
+       echo json_encode($result[0]);
+      }else{
+          redirect('logout');
+      }
+    }
+     
+    public function deletemaster($del_id){
+      if ($this->authchecking() != 0) {
+         $this -> features_model -> delete('features_master', ['id' => $del_id]); 
+         $this -> session -> set_flashdata('successmsg', 'Data has been deleted successfully.');
+         redirect('author/master-features'); 
+      }else{
+        redirect('logout');   
+      }  
+    }
+    
+     private function authchecking(){
+       if($this -> session -> userdata('AyaUserLoginId') != ''){
+           return 1;
+       }else{
+           return 0;
+       }
+    }
+}
+?>

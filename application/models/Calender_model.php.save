@@ -1,0 +1,47 @@
+<?php
+ class Calender_model extends CI_Model{
+     
+     
+     public function getnextMeetingId(){
+        $Result = $this -> db -> select('user_id') -> from('register') -> where(['id' => $this -> session -> userdata('AyaUserLoginId'), 'status' => 1]) -> get() -> result();
+        return 'MT20'.'_'.substr(time(), -4);        
+     }
+     
+     public function registerData(){
+        $UserArray = []; 
+        $Result = $this -> db -> select(['name', 'id']) -> from('register') -> where(['id !=' => $this -> session -> userdata('AyaUserLoginId'), 'status' => 1]) -> get() -> result();
+        foreach($Result as $value){
+           $UserArray[$value -> id] = $value -> name; 
+        } 
+        
+        return $UserArray;
+     }
+
+     public function registerDataWithEmail(){
+        $UserArray = []; 
+        $Result = $this -> db -> select(['email_id', 'id', 'image']) -> from('register') -> where(['id !=' => $this -> session -> userdata('AyaUserLoginId'), 'status' => 1]) -> get() -> result();
+        return $Result;
+     }
+	
+     
+     public function adddata($InsertData) {
+        $this->db->insert('meeting_schedule', $InsertData);
+        return $this->db->insert_id();
+    }
+    
+    public function adddetailsdata($InsertData){
+       $this->db->insert('meeting_schedule_details', $InsertData);
+       return $this->db->insert_id(); 
+    }
+    
+    // Use only for calender view.
+    public function view() {
+        $Result = $this->db->select(['m.id as id', 'm.title as title', 'm.meeting_start_date as start'])
+                           -> from('meeting_schedule as m') 
+                           -> join('meeting_schedule_details as d', 'd.schedule_id = m.id', 'inner')                           
+                           -> where(['d.participate_id' => $this -> session -> userdata('AyaUserLoginId'), 'm.meeting_status' => 1]) -> get();
+        return json_encode($Result->result());
+    }
+ }
+?>
+
